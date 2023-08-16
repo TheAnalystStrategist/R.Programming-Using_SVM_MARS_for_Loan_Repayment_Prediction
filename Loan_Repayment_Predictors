@@ -1,0 +1,68 @@
+##### INSTALL PACKAGES
+install.packages("ggplot2")
+install.packages("readr")
+install.packages("caTools")
+install.packages("rmarkdown")
+install.packages("e1071")
+
+######DOWNLOAD LIBRARY
+library(ggplot2)
+library(readr)
+library(caTools)
+library(rmarkdown)
+library(e1071)
+
+#####LOAD DATAT INTO R
+loans <- read.csv(file.choose())
+
+###LOAN SUMMARY AND STATISTICS FROM EACH VARIABLE
+summary(loans)
+str(loans)
+
+####CONVERT COLUMNS INTO FACTORS
+loans$credit.policy <- as.factor(loans$credit.policy)
+loans$inq.last.6mths <-as.factor(loans$inq.last.6mths)
+loans$delinq.2yrs <- as.factor(loans$delinq.2yrs)
+loans$pub.rec <- as.factor(loans$pub.rec)
+loans$not.fully.paid <- as.factor(loans$not.fully.paid)
+
+####VISUALIZE THE DATA
+ggplot(loans, aes(fico)) + geom_histogram(aes(fill=not.fully.paid), color='black'
+                                            ) + theme_bw()
+
+ggplot(loans, aes(factor(purpose))) + 
+  geom_bar(aes(fill = not.fully.paid), position = "dodge") + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+ggplot(loans, aes(int.rate, fico)) +
+  geom_point(aes(color=not.fully.paid), alpha=0.5) + theme_bw()
+
+###SET DATA INTO TRAIN AND TEST
+set.seed(101)
+
+sample <-sample.split(loans$not.fully.paid, SplitRatio = 0.7)
+train <- subset(loans, sample == TRUE)
+test <- subset(loans, sample == FALSE)
+
+####DEVELOP AN SVM MODEL
+model <- svm(not.fully.paid ~., data = train[1:14])
+summary(model)
+
+###PREDICTIVE POWER
+predict.values <- predict(model,test[1:13])
+table(predict.values, test$not.fully.paid)
+
+####CREATE A NEW MODEL
+tuned.svm <-svm(not.fully.paid ~., data=train[1:14], kernal='radial', cost =70, gamma=0.2)
+predicted.values <- predict(tuned.svm, test[1:13])
+table(predicted.values, test$not.fully.paid)
+
+####PULL ACURACY
+accuracy <- (2133 + 102)/(2133 + 358 + 280 + 102)
+print(accuracy)
+
+precision <- 102/(102+358)
+print(precision)
+
+Recall <- 102/(102+280)
+print(Recall)
